@@ -53,7 +53,7 @@ describe("entity manager > invalidWhereValuesBehavior default", () => {
                 () =>
                     connection.manager.update(
                         Post,
-                        { text: undefined } as any,
+                        { text: undefined },
                         { title: "Updated" },
                     ),
                 "Undefined value encountered",
@@ -61,9 +61,13 @@ describe("entity manager > invalidWhereValuesBehavior default", () => {
 
             await expectInvalidCriteriaError(
                 () =>
-                    connection.manager.update(Post, { text: null } as any, {
-                        title: "Updated",
-                    }),
+                    connection.manager.update(
+                        Post,
+                        { text: null },
+                        {
+                            title: "Updated",
+                        },
+                    ),
                 "Null value encountered",
             )
 
@@ -71,12 +75,12 @@ describe("entity manager > invalidWhereValuesBehavior default", () => {
                 () =>
                     connection.manager.delete(Post, {
                         text: undefined,
-                    } as any),
+                    }),
                 "Undefined value encountered",
             )
 
             await expectInvalidCriteriaError(
-                () => connection.manager.delete(Post, { text: null } as any),
+                () => connection.manager.delete(Post, { text: null }),
                 "Null value encountered",
             )
 
@@ -84,7 +88,7 @@ describe("entity manager > invalidWhereValuesBehavior default", () => {
                 () =>
                     connection.manager.softDelete(Post, {
                         text: undefined,
-                    } as any),
+                    }),
                 "Undefined value encountered",
             )
 
@@ -92,7 +96,7 @@ describe("entity manager > invalidWhereValuesBehavior default", () => {
                 () =>
                     connection.manager.softDelete(Post, {
                         text: null,
-                    } as any),
+                    }),
                 "Null value encountered",
             )
 
@@ -100,7 +104,7 @@ describe("entity manager > invalidWhereValuesBehavior default", () => {
                 () =>
                     connection.manager.restore(Post, {
                         text: undefined,
-                    } as any),
+                    }),
                 "Undefined value encountered",
             )
 
@@ -108,7 +112,7 @@ describe("entity manager > invalidWhereValuesBehavior default", () => {
                 () =>
                     connection.manager.restore(Post, {
                         text: null,
-                    } as any),
+                    }),
                 "Null value encountered",
             )
         }
@@ -117,7 +121,7 @@ describe("entity manager > invalidWhereValuesBehavior default", () => {
     it("should not treat prototype pollution keys as criteria", async () => {
         for (const connection of dataSources) {
             const post = await prepareData(connection)
-            const criteria = JSON.parse(
+            const criteria: Record<string, unknown> = JSON.parse(
                 `{"__proto__":{"polluted":true},"title":"Test Post"}`,
             )
 
@@ -125,7 +129,7 @@ describe("entity manager > invalidWhereValuesBehavior default", () => {
                 text: "Updated text",
             })
 
-            expect(({} as any).polluted).to.be.undefined
+            expect(Object.prototype).not.to.have.property("polluted")
 
             const updated = await connection.manager.findOneByOrFail(Post, {
                 id: post.id,
@@ -137,7 +141,7 @@ describe("entity manager > invalidWhereValuesBehavior default", () => {
     it("should reject criteria that normalize to empty", async () => {
         for (const connection of dataSources) {
             const post = await prepareData(connection)
-            const dangerousCriteria = () =>
+            const dangerousCriteria = (): Record<string, unknown> =>
                 JSON.parse(`{"__proto__":{"polluted":true}}`)
 
             await expectInvalidCriteriaError(
@@ -149,10 +153,7 @@ describe("entity manager > invalidWhereValuesBehavior default", () => {
             )
 
             await expectInvalidCriteriaError(
-                () =>
-                    connection.manager.delete(Post, [
-                        dangerousCriteria(),
-                    ] as any),
+                () => connection.manager.delete(Post, [dangerousCriteria()]),
                 "Empty criteria(s)",
             )
 
@@ -162,10 +163,7 @@ describe("entity manager > invalidWhereValuesBehavior default", () => {
             )
 
             await expectInvalidCriteriaError(
-                () =>
-                    connection.manager.restore(Post, [
-                        dangerousCriteria(),
-                    ] as any),
+                () => connection.manager.restore(Post, [dangerousCriteria()]),
                 "Empty criteria(s)",
             )
 
@@ -174,7 +172,7 @@ describe("entity manager > invalidWhereValuesBehavior default", () => {
             })
             expect(unchanged.text).to.equal("Some text")
             expect(await connection.manager.count(Post)).to.equal(1)
-            expect(({} as any).polluted).to.be.undefined
+            expect(Object.prototype).not.to.have.property("polluted")
         }
     })
 })
